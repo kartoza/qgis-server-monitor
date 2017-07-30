@@ -18,7 +18,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     // Data model: These strings will be the data for the table view cells
     let urls: [String] = [
         "http://qgis.org",
-        "http://plugins.qgis.org"
+        "http://plugins.qgis.org",
+        "http://blog.qgis.org",
+        "http://hub.qgis.org",
+        "http://docs.qgis.org",
+        "http://changelog.qgis.org",
+        "http://api.qgis.org",
+        "http://users.qgis.org"
     ]
     
     // cell reuse id (cells that scroll out of view can be reused)
@@ -49,7 +55,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 let responseString = NSString(data: data!, encoding: String.Encoding.utf8.rawValue)
                 print("responseString = \(String(describing: responseString))")
             }
-            task.resume()
+            task.resume() //runs in its own thread
         }
     }
     
