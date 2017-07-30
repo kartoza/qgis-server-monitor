@@ -16,9 +16,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     @IBOutlet weak var tableView: UITableView!
     
     // Data model: These strings will be the data for the table view cells
+    // Each domain here also needs to be listed in the Info.plist
+    // in section: App Transport Security Settings
+    // And set include subdomains to true if needed
     let urls: [String] = [
         "http://qgis.org",
         "http://plugins.qgis.org",
+        "http://plugins/qgis.org/plugins.xml",
         "http://blog.qgis.org",
         "http://hub.qgis.org",
         "http://docs.qgis.org",
@@ -27,36 +31,47 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         "http://users.qgis.org"
     ]
     
+    // one status per url - will be prepopulated with false until we 
+    // establish that each url is online
+    var statuses: [Bool] = []
+    
     // cell reuse id (cells that scroll out of view can be reused)
-    let cellReuseIdentifier = "cell"
+    let cellReuseIdentifier = "TextCell"
     
     @IBAction func refreshPressed(_ sender: Any) {
         
         print ("Refresh pressed");
-        
+
         for url in urls {
-            
+            let urlIndex = self.urls.index(of: url)
             let scriptUrl = url
             let myUrl = NSURL(string: scriptUrl)
             let request = NSMutableURLRequest(url:myUrl! as URL)
             request.httpMethod = "GET"
             let task = URLSession.shared.dataTask(with: request as URLRequest) {
                 data, response, error in
-                
+
                 // Check for error
                 if error != nil
                 {
-                    print("error=\(String(describing: error))")
-                    
-                    return
+                    //print("error=\(String(describing: error))")
+                    print("Error:    \(url)")
+                    self.statuses[urlIndex!] = false
+                    self.tableView.reloadData()
                 }
-                
-                // Print out response string
-                let responseString = NSString(data: data!, encoding: String.Encoding.utf8.rawValue)
-                print("responseString = \(String(describing: responseString))")
+                else
+                {
+                    print("OK:    \(url)")
+                    self.statuses[urlIndex!] = true
+                    self.tableView.reloadData()
+                    //print the whole page content
+                    //let responseString = NSString(data: data!, encoding: String.Encoding.utf8.rawValue)
+                    //print("responseString = \(String(describing: responseString))")
+                }
             }
             task.resume() //runs in its own thread
         }
+        
     }
     
     override func viewDidLoad() {
@@ -70,6 +85,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         // This view controller itself will provide the delegate methods and row data for the table view.
         tableView.delegate = self
         tableView.dataSource = self
+        
+        // Initialise the status list to false for all urls
+        for _ in urls {
+            self.statuses.append(false)
+        }
     }
     
     override func didReceiveMemoryWarning() {
@@ -88,8 +108,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         // create a new cell if needed or reuse an old one
         let cell:UITableViewCell = self.tableView.dequeueReusableCell(withIdentifier: cellReuseIdentifier) as UITableViewCell!
         
-        // set the text from the data model
-        cell.textLabel?.text = self.urls[indexPath.row]
+        if self.statuses[indexPath.row] {
+            // set the text from the data model and mark the url as online
+            cell.textLabel?.text = "✔︎" + self.urls[indexPath.row]
+        }
+        else {
+            // set the text from the data model and mark the url as offline
+            cell.textLabel?.text = "✘" + self.urls[indexPath.row]
+        }
         
         return cell
     }
